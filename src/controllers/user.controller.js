@@ -5,6 +5,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const registerUser = asyncHandler(async (req, res) => {
+  console.log("req.body:", req.body); // Log text fields
+  console.log("req.files:", req.files);
   //get user details
   //validation-not empty
   //checking if the user already exists
@@ -35,18 +37,24 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverLocalPath = req.files?.coverImage[0]?.path;
+  //const coverImageLocalPath = req.files?.coverImage[0]?.path; //if cover image is not provided, it can be undefined which lead to error
+
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
   }
   const avatar = await uploadOnCloudinary(avatarLocalPath);
-  let coverImage = "";
-  if (!coverLocalPath) {
-    coverImage = await uploadOnCloudinary(coverLocalPath);
-  }
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath); //return empty string if coverImageLocalPath is undefined
   if (!avatar) {
-    throw new ApiError(400, "Avatar file is required");
+    throw new ApiError(400, "Avatar is required");
   }
 
   const user = await User.create({
